@@ -1,0 +1,23 @@
+function onLoad()
+    getObjectFromGUID(drawTableGenerator_GUID).interactable = false
+    getObjectFromGUID(base_GUID).interactable = false
+    getObjectFromGUID(timer_GUID).interactable = false
+    prepareGame()
+end
+
+function onChat(message, player)
+
+    if timer.Clock.paused == false then
+        if(winners[player.steam_name] == nil and order[activePlayerNumber].steam_name ~= player.steam_name) then
+            if(string.lower(message)==string.lower(selectedWord))then
+                winners[player.steam_name] = 1
+                score[player.steam_name] = score[player.steam_name] + timer.getValue()
+                score[order[activePlayerNumber].steam_name] = math.floor(score[order[activePlayerNumber].steam_name] + (timer.getValue() / (tableLength(score) - 1)))
+                Wait.frames(function() broadcastToAll(player.steam_name .. ' ACERTO LA PALABRA!', {r=1,g=0,b=0}) end, 1)
+                updateScore()
+                return false
+            end
+        end
+
+    end
+end

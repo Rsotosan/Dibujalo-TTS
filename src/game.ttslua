@@ -1,0 +1,99 @@
+function prepareGame()
+    timeMarker = getObjectFromGUID(timeMarker_GUID)
+    roundMarker = getObjectFromGUID(roundMarker_GUID)
+    startGameButton = getObjectFromGUID(startGameButton_GUID)
+    timeMarker.createInput({
+        input_function = 'noFunction',
+        position = {x=0, y=0, z=2},
+        width          = 1500,
+        height         = 1000,
+        font_size      = 2000,
+        value          = '70',
+        validation     = 2,
+        alignment = 3
+        --tab            = -- int (1 = None, 2 = Select Next, 3 = Indent),
+        })
+    roundMarker.createInput({
+        input_function = 'noFunction',
+        position = {x=0, y=0, z=2},
+        width          = 1000,
+        height         = 1000,
+        font_size      = 2000,
+        value          = '3',
+        validation     = 2,
+        alignment = 3
+    })
+    startGameButton.createButton({
+        click_function = 'startGame',
+        label          = 'Jugar!',
+        position       = {0,0,4},
+        width          = 4000,
+        height         = 2000,
+        font_size      = 4000
+    })
+
+
+    --[[roundTimeText = spawnObject({
+        type              = '3DText',
+        position          = {x=-15, y=1, z=10},
+        rotation          = {x=90, y=0, z=0}
+    })
+    roundTimeText.TextTool.setFontSize(150)
+    roundTimeText.setValue('Número de rondas')
+
+    roundNumberText = spawnObject({
+        type              = '3DText',
+        position          = {x=-15, y=1, z=0},
+        rotation          = {x=90, y=0, z=0}
+    })
+    roundNumberText.TextTool.setFontSize(150)
+    roundNumberText.setValue('Tiempo por ronda')
+    ]]--
+
+    roundTimeText = getObjectFromGUID(roundTimeText_GUID)
+    roundNumberText = getObjectFromGUID(roundNumberText_GUID)
+end
+
+function startGame()
+    roundTime = tonumber(timeMarker.getInputs()[1].value)
+    maxRound = tonumber(roundMarker.getInputs()[1].value)
+    timeMarker.destruct()
+    roundMarker.destruct()
+    startGameButton.destruct()
+    roundTimeText.destruct()
+    roundNumberText.destruct()
+
+    for x,i in ipairs(Player.getPlayers()) do
+        order[x] = i
+    end
+
+    for x,i in ipairs(Player.getPlayers()) do
+        score[i.steam_name] = 0
+    end
+    order = randomizeTable(order)
+    activePlayerNumber = 1
+    round = 1
+    startTurn()
+end
+
+function endGame()
+    text = spawnObject({
+        type              = '3DText',
+        position          = {x=-1, y=1, z=12},
+        rotation          = {x=90, y=0, z=0}
+    })
+    text.TextTool.setFontSize(150)
+    text.setValue('Puntuaciones:\n\n')
+    for i=1, tableLength(score) do
+        max = -1
+        maxPos = -1
+        for player,points in pairs(score) do
+            if points > max then
+                max = points
+                maxPos = player
+            end
+        end
+        text.setValue(text.TextTool.getValue() .. i .. 'º '.. maxPos .. ' : ' .. max .. ' puntos\n\n')
+        score[maxPos] = -2
+    end
+end

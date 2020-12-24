@@ -1,0 +1,181 @@
+objectsToDelete = {}
+
+function startTurn()
+    winners = {}
+    updateScore()
+    base = getObjectFromGUID(base_GUID)
+    timer = getObjectFromGUID(timer_GUID)
+    word1 = table.remove(words, math.random(tableLength(words)))
+    word2 = table.remove(words, math.random(tableLength(words)))
+    word3 = table.remove(words, math.random(tableLength(words)))
+    base.createButton({
+        click_function = 'selectedWord1',
+        label          = word1,
+        position       = {0,-0.5,10},
+        width          = (string.len(word1)/2) * 1000,
+        height         = buttonStyle.height,
+        font_size      = buttonStyle.font_size
+    })
+    base.createButton({
+        click_function = 'selectedWord2',
+        label          = word2,
+        position       = {0,-0.5,16},
+        width          = (string.len(word2)/2) * 1000,
+        height         = buttonStyle.height,
+        font_size      = buttonStyle.font_size
+    })
+    base.createButton({
+        click_function = 'selectedWord3',
+        label          = word3,
+        position       = {0,-0.5,22},
+        width          = (string.len(word3)/2) * 1000,
+        height         = buttonStyle.height,
+        font_size      = buttonStyle.font_size
+    })
+    base.attachInvisibleHider("hide", true, getColorPlayers(order[activePlayerNumber]))
+    timer.setValue(roundTime)
+    broadcastToAll('VA A DIBUJAR ' .. order[activePlayerNumber].steam_name, {r=0,g=255,b=0})
+end
+
+function selectedWord1()
+    selectedWord = word1
+    startPaint()
+end
+
+function selectedWord2()
+    selectedWord = word2
+    startPaint()
+end
+
+function selectedWord3()
+    selectedWord = word3
+    startPaint()
+end
+
+function startPaint()
+    isRoundStarted = true
+    timer.Clock.pauseStart()
+    drawTable = generateDrawTable()
+    table.insert(objectsToDelete, drawTable)
+    --Generate the word hint
+    hintWord = generateText({x=-1, y=1, z=12})
+    table.insert(objectsToDelete, hintWord)
+
+    spawnFullWord()
+
+    --remove word buttons
+    for x,i in ipairs(base.getButtons()) do
+        base.removeButton(x-1)
+    end
+
+    --Hints functionality
+    possibleHints = {}
+    positionHints = {}
+    i = 1
+    for s in string.gmatch(selectedWord,'.') do
+        if(s~=' ') then
+            table.insert(possibleHints, i)
+            i = i + 1
+        end
+    end
+    for i=1, tableLength(possibleHints) /2 do
+        lengthPossibleHints = tableLength(possibleHints)
+        giveHintWait = Wait.condition(function () giveHint() end,
+        function() return conditionTimeToHint(((roundTime - 10) / (lengthPossibleHints / 2)) * i) end, roundTime)
+    end
+    writeHintText()
+
+    --Wait until crono is 0 or all players hit the word
+    Wait.condition(endTurnTransition, conditionEndTurn)
+end
+
+function endTurnTransition()
+    timer.Clock.pauseStart()
+    broadcastToAll('La palabra era ' .. selectedWord, {r=0,g=255,b=0})
+    hintWord.TextTool.setValue(selectedWord)
+    Wait.time(endTurn, 7, 1)
+end
+
+function endTurn()
+    deleteObjects()
+    --drawTable.destruct()
+    --hintWord.destruct()
+
+    if activePlayerNumber == tableLength(order) then
+        round = round + 1
+        if(round>maxRound) then
+            return endGame()
+        end
+        activePlayerNumber = 0
+    end
+    activePlayerNumber = activePlayerNumber + 1
+    startTurn()
+end
+
+function conditionTimeToHint(timeToHint)
+    return (roundTime -  timeToHint > timer.getValue()) or (timer.Clock.paused == true)
+end
+
+function giveHint()
+    if(timer.Clock.paused == false) then
+        hintPosition = table.remove(possibleHints, math.random(tableLength(possibleHints)))
+        positionHints[hintPosition] = hintPosition
+        writeHintText()
+    end
+
+end
+
+function writeHintText()
+    i = 1
+    hintWord.TextTool.setValue(' ')
+    for s in string.gmatch(selectedWord,'.') do
+        if(s ~= ' ') then
+            if(positionHints[i] ~= nil) then
+                hintWord.TextTool.setValue(hintWord.TextTool.getValue() .. ' ' .. s)
+            else
+                hintWord.TextTool.setValue(hintWord.TextTool.getValue() .. ' _')
+            end
+        else
+            hintWord.TextTool.setValue(hintWord.TextTool.getValue() .. '  ')
+        end
+        i = i +1
+    end
+end
+
+function conditionEndTurn()
+    return (timer.getValue() == 0) or (tableLength(winners) == (tableLength(score) - 1) )
+end
+
+function spawnFullWord()
+    fullWord = spawnObject({
+        type              =  'BlockSquare',
+        position          = {x=-1,y=1,z=16},
+        rotation       = {x=180, y=0, z=180},
+    })
+    fullWord.setColorTint({r=0,g=0,b=0, a=0})
+    fullWord.interactable = false
+    fullWord.attachInvisibleHider("hide", true, getColorPlayers(order[activePlayerNumber]))
+    table.insert(objectsToDelete, fullWord)
+
+    fullWord.createInput({
+        input_function = 'noEdit',
+        position = {x=0, y=0, z=2},
+        width          = string.len(selectedWord) * 500,
+        height         = 1000,
+        font_size      = 2000,
+        value          = selectedWord,
+        alignment = 3
+        })
+end
+
+function deleteObjects()
+    for i,x in pairs(objectsToDelete) do
+        x.destruct()
+    end
+    objectsToDelete = {}
+end
+
+function noEdit()
+    Wait.frames(function() fullWord.editInput({index=0,
+    value= selectedWord}) end, 1)
+end

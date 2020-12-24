@@ -1,0 +1,32 @@
+selectedWord=''
+isRoundStarted = false
+score = {}
+winners = {}
+activePlayerNumber = {}
+order = {}
+round = 0
+drawTable = ''
+roundTime = 90
+maxRound = 3
+
+base_GUID = '747c5e'
+timer_GUID = '4c6cc8'
+drawTableGenerator_GUID = '36a113'
+roundMarker_GUID = '2c5fc8'
+timeMarker_GUID = '41efa9'
+startGameButton_GUID = 'ee9037'
+roundNumberText_GUID = 'e702d7'
+roundTimeText_GUID = '0925c9'
+
+buttonStyle= {
+    width = 4000,
+    height = 1500,
+    font_size = 800
+}
+
+
+#include .\words
+#include .\utils
+#include .\turn
+#include .\game
+#include .\ttsEvents

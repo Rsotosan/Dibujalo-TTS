@@ -1,0 +1,64 @@
+function tableLength(T)
+  local count = 0
+  for _ in pairs(T) do count = count + 1 end
+  return count
+end
+
+function getColorPlayers(player)
+    colors = {}
+    for x,i in ipairs(Player.getPlayers()) do
+        if(i.steam_name ~= player.steam_name) then
+            table.insert(colors, i.color)
+        end
+    end
+    return colors
+end
+
+function generateDrawTable()
+    drawTableGenerator = getObjectFromGUID(drawTableGenerator_GUID)
+    drawTable = drawTableGenerator.takeObject({
+        position          = {x=0, z=-4, y=1},
+        rotation = {0,0,0},
+        smooth = false
+    })
+    drawTable.setLock(true)
+    return drawTable
+end
+
+function generateText(pos)
+    text = spawnObject({
+        type              = '3DText',
+        position          = pos,
+        rotation          = {x=90, y=0, z=0}
+    })
+    text.TextTool.setFontSize(150)
+    text.TextTool.setValue(' ')
+    return text
+end
+
+function randomizeTable(t)
+    randomT = {}
+    i = 1
+    while tableLength(t) > 0 do
+        randomItem = table.remove(t, math.random(tableLength(t)))
+        table.insert(randomT, i, randomItem)
+        i = i + 1
+    end
+    return randomT
+end
+
+function updateScore()
+    Notes.setNotes('Ronda ' .. round .. '/' .. maxRound .. '\n')
+    for x,i in pairs(score) do
+        if(winners[x] ~= nil) then
+            Notes.setNotes(Notes.getNotes() .. '\n[FF2D00]' .. x .. '=' .. i .. '[-]')
+        elseif (x == order[activePlayerNumber].steam_name) then
+            Notes.setNotes(Notes.getNotes() .. '\n[FBFF00]' .. x .. '=' .. i .. '[-]')
+        else
+            Notes.setNotes(Notes.getNotes() .. '\n' .. x .. '=' .. i)
+        end
+    end
+end
+
+function noFunction()
+end
